@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+/* Notion-inspired tokens: warm ink, muted gray, hairline borders */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --color-ink: #37352f;
+  --color-muted: #787774;
+  --color-faint: #a5a29c;
+  --color-line: rgb(55 53 47 / 0.09);
+  --color-line-strong: rgb(55 53 47 / 0.16);
+  --color-hover: rgb(55 53 47 / 0.06);
+  --color-canvas: #fbfbfa;
+  --color-accent: #d6336c;
+  --color-accent-strong: #b8295b;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgb(253 224 71 / 0.55);
+}
+
+/* Frosted panel: header, side peek, dialogs */
+@utility glass {
+  background: rgb(255 255 255 / 0.72);
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  border: 1px solid var(--color-line);
+  box-shadow:
+    0 1px 2px rgb(15 15 15 / 0.03),
+    0 12px 32px rgb(15 15 15 / 0.06);
+}
+
+/* Lighter glass for board columns */
+@utility glass-soft {
+  background: rgb(255 255 255 / 0.42);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgb(255 255 255 / 0.7);
+}
+
+/* Cards: near-solid white like Notion board cards */
+@utility card {
+  background: rgb(255 255 255 / 0.94);
+  border: 1px solid var(--color-line);
+  box-shadow:
+    0 1px 2px rgb(15 15 15 / 0.04),
+    0 0 0 0 transparent;
+}
+
+@utility field {
+  background: #fff;
+  border: 1px solid var(--color-line-strong);
+  color: var(--color-ink);
+  &::placeholder {
+    color: var(--color-faint);
+  }
+  &:focus {
+    outline: none;
+    border-color: rgb(214 51 108 / 0.55);
+    box-shadow: 0 0 0 3px rgb(214 51 108 / 0.14);
+  }
+}
+
+/* Borderless input that looks like text until hovered/focused (Notion properties) */
+@utility field-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-ink);
+  &::placeholder {
+    color: var(--color-faint);
+  }
+  &:hover {
+    background: var(--color-hover);
+  }
+  &:focus {
+    outline: none;
+    background: #fff;
+    border-color: var(--color-line-strong);
+    box-shadow: 0 2px 8px rgb(15 15 15 / 0.06);
+  }
+}
+
+@utility thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(55 53 47 / 0.18) transparent;
+}
+
+select option {
+  background: #fff;
+  color: var(--color-ink);
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(24px, -30px) scale(1.05);
+  }
+}
+
+.blob {
+  animation: float 24s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blob {
+    animation: none;
+  }
+}
