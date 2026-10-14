@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { ArrowDown, ArrowUp, BookOpen, Bot, ChevronRight, Copy, KeyRound, Plus, ShieldCheck, Sparkles, Terminal, Trash2 } from "lucide-react";
 import { PUBLIC_API_BASE, api } from "../lib/api";
+import { copyShortcut, copyText } from "../lib/clipboard";
 import type { ApiKeyInfo, Stage } from "../lib/types";
 import { Button, Field, Input, Spinner, formatDate } from "../components/ui";
 
@@ -20,11 +21,9 @@ function Panel({ title, icon, children, description }: { title: string; icon: Re
   );
 }
 
-function copy(text: string) {
-  navigator.clipboard.writeText(text).then(
-    () => toast.success("Copied"),
-    () => toast.error("Couldn't copy. Select the text and copy it manually."),
-  );
+async function copy(text: string) {
+  if (await copyText(text)) toast.success("Copied");
+  else toast.error(`Your browser blocked copying. Select the text and press ${copyShortcut}.`);
 }
 
 const slug = (label: string) =>

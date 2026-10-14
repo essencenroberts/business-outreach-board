@@ -1,8 +1,9 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import clsx from "clsx";
 import { toast } from "sonner";
 import { Check, Copy, Globe, GlobeLock, MapPin, Phone, RefreshCw, Sparkles } from "lucide-react";
 import { api } from "../lib/api";
+import { copyShortcut, copyText, selectContents } from "../lib/clipboard";
 import type { Business, BusinessInput, LeadCandidate } from "../lib/types";
 import { Button, Field, Input, Modal, Select, externalUrl } from "./ui";
 
@@ -84,6 +85,8 @@ export function FindLeadsModal({
   const [extra, setExtra] = useState("");
   const [focus, setFocus] = useState<keyof typeof FOCUS>("both");
   const [showRequest, setShowRequest] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const requestRef = useRef<HTMLTextAreaElement>(null);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState(false);
   const [results, setResults] = useState<Candidate[] | null>(null);
@@ -99,14 +102,25 @@ export function FindLeadsModal({
     extra.trim() ? ` Also: ${extra.trim().replace(/\.$/, "")}.` : ""
   }`;
 
+  useEffect(() => setCopied(false), [request]);
+
+  async function copyRequest() {
+    const ok = await copyText(request);
+    setCopied(ok);
+    if (ok) {
+      toast.success("Request copied. Paste it into Claude Code.");
+    } else {
+      // Clipboard blocked (some browsers and embedded panes): select it so the user can copy by hand.
+      setTimeout(() => selectContents(requestRef.current), 0);
+      toast.info(`Your browser blocked copying. The request is selected, so press ${copyShortcut} to copy it.`);
+    }
+  }
+
   async function search(e: FormEvent) {
     e.preventDefault();
     if (!aiEnabled) {
       setShowRequest(true);
-      navigator.clipboard.writeText(request).then(
-        () => toast.success("Request copied. Paste it into Claude Code."),
-        () => null,
-      );
+      await copyRequest();
       return;
     }
     setSearching(true);
@@ -220,13 +234,18 @@ export function FindLeadsModal({
 
       {!aiEnabled && showRequest && (
         <div className="mt-5 rounded-lg border border-line bg-white/80 p-4">
-          <p className="text-xs font-medium text-muted">Your request (copied)</p>
-          <div className="mt-1.5 flex items-start gap-2 rounded-md bg-pink-50 p-3 text-sm text-ink">
-            <p className="min-w-0 flex-1">{request}</p>
-            <Button
-              size="sm"
-              onClick={() => navigator.clipboard.writeText(request).then(() => toast.success("Copied"), () => toast.error("Couldn't copy"))}
-            >
+          <p className="text-xs font-medium text-muted">{copied ? "Your request (copied)" : `Your request: click inside, then press ${copyShortcut}`}</p>
+          <div className="mt-1.5 flex items-start gap-2 rounded-md bg-pink-50 p-2 text-sm text-ink">
+            <textarea
+              ref={requestRef}
+              readOnly
+              value={request}
+              rows={3}
+              onFocus={(e) => e.currentTarget.select()}
+              aria-label="Request for Claude Code"
+              className="min-w-0 flex-1 resize-none border-0 bg-transparent p-1 text-sm leading-relaxed text-ink focus:outline-none"
+            />
+            <Button size="sm" onClick={copyRequest}>
               <Copy className="h-3.5 w-3.5" /> Copy
             </Button>
           </div>
