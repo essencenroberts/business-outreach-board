@@ -35,4 +35,14 @@ Lead fields: `name` (required), `category`, `contactName`, `phone`, `email`, `ad
 5. In `researchNotes`, write: what the business is, what you found (with the check date), a one-line pitch idea, and the source sites you used.
 6. Before adding, `GET /leads` to avoid repeats, then `POST /leads` in one batch. Tell the user what you added and what needs verifying.
 
+### Service providers (chefs, home bakers, real estate agents, makeup artists, loc stylists, wig installers, lash techs, personal trainers, etc.)
+
+Many are individuals who work from home, a salon suite, or on the go, so they rarely show up as storefronts.
+
+- Find them where they actually market themselves: Instagram, Facebook, TikTok, StyleSeat, Booksy, Vagaro, GlossGenius, Square/Acuity booking pages, Linktree, Thumbtack, Google Business listings, local press, and brokerage or salon-suite rosters (Salons by JC, MY SALON Suite, Sola).
+- **A booking page, Linktree or social profile is not a website of their own.** Set `hasWebsite: "no"` and put the link in `socials` (Instagram, Facebook, etc.) or `researchNotes` (booking pages). Note what the profile does well, such as photos or reviews, and what's missing: no branded site, no email list, no lead magnet, nothing ranking on Google.
+- Real estate agents and loan officers usually have a brokerage profile page. That counts as a weak website (generic template, no personal brand or lead capture), not a strong one. Prioritize agents who rely on it alone.
+- Use the person's business name if they have one, otherwise their name plus specialty (e.g. "Jasmine Carter, Loc Stylist"), and fill in `contactName`.
+- For home-based providers, use the neighborhood or service area, not a home address, even if you find one.
+
 The user prefers plain language and wants to be told clearly what is verified versus a guess.

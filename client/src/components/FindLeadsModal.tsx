@@ -7,28 +7,92 @@ import { ClaudeCodeRequest, useCopyRequest } from "./ClaudeCodeRequest";
 import type { Business, BusinessInput, LeadCandidate } from "../lib/types";
 import { Button, Field, Input, Modal, Select, externalUrl } from "./ui";
 
-const CATEGORIES = [
-  "Restaurants",
-  "Food trucks",
-  "Bakeries & cafes",
-  "Hair salons",
-  "Barbershops",
-  "Nail salons",
-  "Med spas",
-  "Boutiques",
-  "Auto repair",
-  "Contractors & remodelers",
-  "Roofers",
-  "Landscapers",
-  "Cleaning services",
-  "HVAC & plumbers",
-  "Fitness studios",
-  "Daycares",
-  "Pet groomers",
-  "Photographers",
-  "Event venues",
-  "Churches & nonprofits",
+/** Business types grouped for the picker. Service providers often work from home, a suite or on the go. */
+const CATEGORY_GROUPS: { group: string; options: string[] }[] = [
+  {
+    group: "Food & drink",
+    options: [
+      "Restaurants",
+      "Food trucks",
+      "Private & personal chefs",
+      "Caterers",
+      "Bakers & home bakeries",
+      "Bakeries",
+      "Coffee shops",
+      "Juice & smoothie shops",
+      "Dessert & sweets shops",
+      "Meal prep services",
+      "Mobile bartenders",
+    ],
+  },
+  {
+    group: "Beauty",
+    options: [
+      "Hair salons",
+      "Barbershops",
+      "Loc stylists",
+      "Braiders",
+      "Wig installers",
+      "Natural hair stylists",
+      "Nail salons & nail techs",
+      "Lash techs",
+      "Brow artists",
+      "Makeup artists",
+      "Estheticians & skincare studios",
+      "Med spas",
+      "Waxing studios",
+    ],
+  },
+  {
+    group: "Wellness & fitness",
+    options: [
+      "Personal trainers & fitness coaches",
+      "Gyms & boxing gyms",
+      "Yoga & pilates studios",
+      "Dance studios",
+      "Massage therapists",
+      "Doulas & birth workers",
+      "Nutritionists & health coaches",
+    ],
+  },
+  {
+    group: "Home services",
+    options: [
+      "Contractors & remodelers",
+      "Roofers",
+      "Landscapers & lawn care",
+      "House cleaners",
+      "HVAC & plumbers",
+      "Electricians",
+      "Handymen",
+      "Movers",
+      "Pressure washing",
+    ],
+  },
+  {
+    group: "Professional & creative",
+    options: [
+      "Real estate agents",
+      "Mortgage loan officers",
+      "Insurance agents",
+      "Tax preparers & bookkeepers",
+      "Notaries & mobile notaries",
+      "Photographers",
+      "Videographers",
+      "DJs",
+      "Event planners & decorators",
+      "Event venues",
+      "Florists",
+      "Tutors",
+      "Daycares & home childcare",
+      "Pet groomers & dog walkers",
+      "Auto repair & detailing",
+      "Boutiques",
+      "Churches & nonprofits",
+    ],
+  },
 ];
+const OTHER = "__other";
 
 const AREAS = [
   "St. Louis City",
@@ -61,8 +125,8 @@ const AREAS = [
 type Candidate = LeadCandidate & { selected: boolean };
 
 const FOCUS = {
-  both: "have no website or a weak website (not mobile friendly, poor SEO, no clear way to book or buy, no email signup)",
-  none: "have no website of their own",
+  both: "have no website of their own (social media or a booking page like StyleSeat, Booksy or Linktree doesn't count) or a weak website (not mobile friendly, poor SEO, no clear way to book or buy, no email signup)",
+  none: "have no website of their own (social media or a booking page like StyleSeat, Booksy or Linktree doesn't count)",
   weak: "have a weak website (not mobile friendly, poor SEO, no clear way to book or buy, no email signup)",
 } as const;
 
@@ -79,7 +143,9 @@ export function FindLeadsModal({
   onRefresh: () => void;
   aiEnabled: boolean;
 }) {
-  const [category, setCategory] = useState("");
+  const [categoryChoice, setCategoryChoice] = useState("");
+  const [customCategory, setCustomCategory] = useState("");
+  const category = categoryChoice === OTHER ? customCategory : categoryChoice;
   const [area, setArea] = useState("");
   const [count, setCount] = useState(8);
   const [extra, setExtra] = useState("");
@@ -171,12 +237,31 @@ export function FindLeadsModal({
     <Modal open={open} onClose={searching ? () => {} : onClose} title={aiEnabled ? "Find leads with Claude" : "Find leads with Claude Code"} wide>
       <form onSubmit={search} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
         <Field label="Type of business">
-          <Input list="bob-categories" required value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Barbershops" />
-          <datalist id="bob-categories">
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c} />
+          <Select required value={categoryChoice} onChange={(e) => setCategoryChoice(e.target.value)}>
+            <option value="" disabled>
+              Choose a type…
+            </option>
+            {CATEGORY_GROUPS.map(({ group, options }) => (
+              <optgroup key={group} label={group}>
+                {options.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </optgroup>
             ))}
-          </datalist>
+            <option value={OTHER}>Something else…</option>
+          </Select>
+          {categoryChoice === OTHER && (
+            <Input
+              required
+              autoFocus
+              className="mt-1.5"
+              value={customCategory}
+              onChange={(e) => setCustomCategory(e.target.value)}
+              placeholder="e.g. Sneaker cleaners, tattoo artists"
+            />
+          )}
         </Field>
         <Field label="Area">
           <Input list="bob-areas" required value={area} onChange={(e) => setArea(e.target.value)} placeholder="e.g. Cherokee Street" />
