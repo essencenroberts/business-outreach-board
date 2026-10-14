@@ -77,6 +77,10 @@ npm run dev:client                   # app on http://localhost:5173 (proxies /ap
 
 ## Connect an AI agent
 
+**Easiest: Claude Code (uses your Claude plan, no API cost).** Create a key in **Settings → AI agent access**, open Claude Code in this folder and say *"Save this agent key for my Business Outreach Board: bob_…"*. Claude stores it in `.agent-key` (git-ignored), and [CLAUDE.md](CLAUDE.md) tells every future session how to use it. After that, just ask: *"find 10 barbershops in North City with no website and add them to my board."*
+
+**Any other agent:**
+
 1. Go to **Settings → AI agent access → Create API key** and copy the key. It's only shown once.
 2. Copy the **instructions** block shown under it into your agent (a Claude Project, Claude Code, a custom GPT-style agent, etc.).
 3. Your agent can now do things like *"Add Sweet Soulard Bakery, 1912 S 12th St, 314-555-0142, they only have Instagram"*. The lead appears in **Researching**, marked with a bot icon.

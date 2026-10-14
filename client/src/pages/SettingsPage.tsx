@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, Bot, Copy, KeyRound, Plus, Sparkles, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, BookOpen, Bot, ChevronRight, Copy, KeyRound, Plus, ShieldCheck, Sparkles, Terminal, Trash2 } from "lucide-react";
 import { PUBLIC_API_BASE, api } from "../lib/api";
 import type { ApiKeyInfo, Stage } from "../lib/types";
 import { Button, Field, Input, Spinner, formatDate } from "../components/ui";
@@ -165,72 +165,177 @@ Only add real businesses you have verified. Leave fields empty rather than guess
   -d '{"name":"Example Bakery","category":"Bakery","neighborhood":"Soulard","phone":"314-555-0100","audit":{"hasWebsite":"no"}}'`;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-        <Field label="Key name" className="flex-1">
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Claude Code, My research agent" />
-        </Field>
-        <Button variant="primary" onClick={create} loading={creating}>
-          <KeyRound className="h-4 w-4" /> Create API key
-        </Button>
+    <div className="space-y-5">
+      {/* How the key works */}
+      <div className="rounded-lg border border-line bg-white/70 p-3 text-sm">
+        <p className="flex items-center gap-1.5 font-medium">
+          <ShieldCheck className="h-4 w-4 text-lime-700" /> How an agent key works
+        </p>
+        <ul className="mt-1.5 list-disc space-y-1 pl-5 text-muted">
+          <li>It's a password just for AI agents. Whoever has it can add leads, search, move cards between stages, set follow-ups and log notes.</li>
+          <li>It can't delete businesses, change settings, create keys or sign in as you.</li>
+          <li>The full key is shown only once. If you lose it, create a new one. Revoke a key below and it stops working immediately.</li>
+        </ul>
       </div>
 
-      {newKey && (
-        <div className="rounded-lg border border-lime-400 bg-lime-100 p-3">
-          <p className="text-sm font-semibold text-lime-800">Copy this key now. You won't be able to see it again.</p>
-          <div className="mt-2 flex gap-2">
-            <code className="min-w-0 flex-1 truncate rounded-md bg-[rgb(55_53_47/0.04)] px-3 py-2 text-xs">{newKey}</code>
-            <Button size="sm" onClick={() => copy(newKey)}>
-              <Copy className="h-3.5 w-3.5" /> Copy
-            </Button>
+      {/* Claude Code workflow */}
+      <div>
+        <p className="mb-2 flex items-center gap-1.5 text-sm font-medium">
+          <Terminal className="h-4 w-4 text-pink-700" /> Use it with Claude Code (recommended, no extra cost)
+        </p>
+        <ol className="space-y-2 text-sm">
+          <Step n={1} title="Create a key (one time)">
+            Name it <em>Claude Code</em> below, click <strong className="font-medium text-ink">Create API key</strong> and copy it.
+          </Step>
+          <Step n={2} title="Hand it to Claude (one time)">
+            In Claude Code, open your <code className="rounded bg-[rgb(55_53_47/0.06)] px-1 text-xs">business-outreach-board</code> folder and say:{" "}
+            <CopyLine text="Save this agent key for my Business Outreach Board: <paste key here>" />
+            Claude saves it in your project folder (never uploaded to GitHub), so every future session can use it.
+          </Step>
+          <Step n={3} title="Each time: just ask">
+            Open Claude Code in the same folder and ask in plain English. Claude does the research and updates the board. Refresh the board to see changes.
+          </Step>
+        </ol>
+        <p className="mb-1.5 mt-3 text-xs font-medium text-muted">Things you can ask</p>
+        <div className="space-y-1">
+          {EXAMPLE_ASKS.map((ask) => (
+            <CopyLine key={ask} text={ask} />
+          ))}
+        </div>
+      </div>
+
+      {/* Create + list keys */}
+      <div className="border-t border-line pt-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+          <Field label="Key name" className="flex-1">
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Claude Code, My research agent" />
+          </Field>
+          <Button variant="primary" onClick={create} loading={creating}>
+            <KeyRound className="h-4 w-4" /> Create API key
+          </Button>
+        </div>
+
+        {newKey && (
+          <div className="mt-3 rounded-lg border border-lime-300 bg-lime-50 p-3">
+            <p className="text-sm font-medium text-lime-800">Copy this key now. You won't be able to see it again.</p>
+            <div className="mt-2 flex gap-2">
+              <code className="min-w-0 flex-1 truncate rounded-md bg-white px-3 py-1.5 text-xs">{newKey}</code>
+              <Button size="sm" onClick={() => copy(newKey)}>
+                <Copy className="h-3.5 w-3.5" /> Copy
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-3">
+          {keys === null ? (
+            <Spinner className="h-4 w-4" />
+          ) : keys.length > 0 ? (
+            <ul className="divide-y divide-line rounded-lg border border-line bg-white/70">
+              {keys.map((k) => (
+                <li key={k._id} className="flex items-center justify-between gap-3 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{k.name}</p>
+                    <p className="text-xs text-muted">
+                      {k.prefix}… · created {formatDate(k.createdAt)}
+                      {k.lastUsedAt ? ` · last used ${formatDate(k.lastUsedAt)}` : " · never used"}
+                    </p>
+                  </div>
+                  <Button variant="danger" size="sm" onClick={() => revoke(k._id)} aria-label={`Revoke ${k.name}`}>
+                    <Trash2 className="h-3.5 w-3.5" /> Revoke
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted">No keys yet.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Other agents */}
+      <details className="group rounded-lg border border-line bg-white/50">
+        <summary className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2 text-sm font-medium text-muted hover:text-ink">
+          <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" /> Using a different AI agent or tool
+        </summary>
+        <div className="space-y-4 px-3 pb-3">
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-medium text-muted">Instructions to paste into your agent</p>
+              <Button size="sm" onClick={() => copy(agentPrompt)}>
+                <Copy className="h-3.5 w-3.5" /> Copy
+              </Button>
+            </div>
+            <pre className="thin-scroll max-h-72 overflow-auto whitespace-pre-wrap rounded-lg bg-[rgb(55_53_47/0.04)] p-3 text-xs text-ink">{agentPrompt}</pre>
+          </div>
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-medium text-muted">Test it with curl</p>
+              <Button size="sm" onClick={() => copy(curl)}>
+                <Copy className="h-3.5 w-3.5" /> Copy
+              </Button>
+            </div>
+            <pre className="thin-scroll overflow-auto rounded-lg bg-[rgb(55_53_47/0.04)] p-3 text-xs text-ink">{curl}</pre>
           </div>
         </div>
-      )}
-
-      {keys === null ? (
-        <Spinner />
-      ) : keys.length > 0 ? (
-        <ul className="space-y-2">
-          {keys.map((k) => (
-            <li key={k._id} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-[rgb(55_53_47/0.05)] px-3 py-2">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{k.name}</p>
-                <p className="text-xs text-muted">
-                  {k.prefix}… · created {formatDate(k.createdAt)}
-                  {k.lastUsedAt ? ` · last used ${formatDate(k.lastUsedAt)}` : " · never used"}
-                </p>
-              </div>
-              <button onClick={() => revoke(k._id)} className="rounded-lg p-2 text-muted hover:bg-red-100 hover:text-red-600" aria-label={`Revoke ${k.name}`}>
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-sm text-muted">No keys yet.</p>
-      )}
-
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Instructions to paste into your agent</p>
-          <Button size="sm" onClick={() => copy(agentPrompt)}>
-            <Copy className="h-3.5 w-3.5" /> Copy
-          </Button>
-        </div>
-        <pre className="thin-scroll max-h-72 overflow-auto whitespace-pre-wrap rounded-lg bg-[rgb(55_53_47/0.04)] p-3 text-xs text-ink">{agentPrompt}</pre>
-      </div>
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Test it with curl</p>
-          <Button size="sm" onClick={() => copy(curl)}>
-            <Copy className="h-3.5 w-3.5" /> Copy
-          </Button>
-        </div>
-        <pre className="thin-scroll overflow-auto rounded-lg bg-[rgb(55_53_47/0.04)] p-3 text-xs text-ink">{curl}</pre>
-      </div>
+      </details>
     </div>
   );
 }
+
+const EXAMPLE_ASKS = [
+  "Find 10 hair salons in North St. Louis with no website and add them to my board.",
+  "Move Taqueria El Bronco to Emailed and set a follow-up for Friday.",
+  "Add a note to Mauki's Bakery: called, owner wants a quote for online pre-orders.",
+  "Which leads have follow-ups due this week?",
+  "Check the websites of everything in Researching and update their audits.",
+  "Draft a short outreach email for The Benton Park Baker based on my notes.",
+];
+
+function Step({ n, title, children }: { n: number; title: string; children: ReactNode }) {
+  return (
+    <li className="flex gap-3">
+      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-pink-100 text-xs font-semibold text-pink-800">{n}</span>
+      <div className="min-w-0 text-muted">
+        <p className="font-medium text-ink">{title}</p>
+        {children}
+      </div>
+    </li>
+  );
+}
+
+function CopyLine({ text }: { text: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() => copy(text)}
+      title="Copy"
+      className="group my-1 flex w-full items-start gap-2 rounded-md bg-[rgb(55_53_47/0.04)] px-2.5 py-1.5 text-left text-xs text-ink hover:bg-[rgb(55_53_47/0.08)]"
+    >
+      <span className="min-w-0 flex-1">“{text}”</span>
+      <Copy className="mt-0.5 h-3.5 w-3.5 shrink-0 text-faint group-hover:text-ink" />
+    </button>
+  );
+}
+
+const WORKFLOW = [
+  {
+    title: "1. Find leads",
+    body: "Ask Claude Code to research businesses for you (see AI agent access), or click New on the board to add one yourself. Everything new lands in Researching.",
+  },
+  {
+    title: "2. Research and audit",
+    body: "Open a card. In Website audit, run Quick site check (free) or mark each item Has it / Missing. The opportunity score goes up the more they're missing: pink 60+ is a hot lead, yellow 30–59 is worth a look, lime is lower.",
+  },
+  {
+    title: "3. Reach out and log it",
+    body: "Email or call, then add an entry in Notes & activity and pick Emailed, Called or Meeting. Drag the card to the matching column and set a Follow up date.",
+  },
+  {
+    title: "4. Follow up and close",
+    body: "Click 'follow-ups due' at the top of the board each morning. Move cards through Responded → Discovery Call Set → Proposal Sent → Contract Signed → Onboarding → Won (or Lost).",
+  },
+];
 
 export function SettingsPage() {
   const [ai, setAi] = useState<{ enabled: boolean; model: string } | null>(null);
@@ -243,36 +348,49 @@ export function SettingsPage() {
       <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-lime-200 via-yellow-100 to-pink-200 text-2xl shadow-sm" aria-hidden>
         ⚙️
       </div>
-      <h1 className="text-[28px] font-bold leading-tight tracking-tight sm:text-[34px]">Settings</h1>
-      <p className="mb-8 mt-1 text-sm text-muted">Your pipeline, Claude connection and AI agent access.</p>
-    <div className="grid gap-4 lg:grid-cols-2">
-      <Panel title="Pipeline stages" icon={<ArrowDown className="h-5 w-5" />} description="Rename, recolor, reorder or add the columns on your board.">
-        <StagesEditor />
+      <h1 className="text-[28px] font-bold leading-tight tracking-tight sm:text-[34px]">Settings & guide</h1>
+      <p className="mb-8 mt-1 text-sm text-muted">How to use your board, your pipeline stages, and AI access.</p>
+
+      <Panel title="How to use your board" icon={<BookOpen className="h-5 w-5" />} description="A simple routine from first find to signed client.">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {WORKFLOW.map((step) => (
+            <div key={step.title} className="rounded-lg border border-line bg-white/70 p-3">
+              <p className="text-sm font-medium">{step.title}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted">{step.body}</p>
+            </div>
+          ))}
+        </div>
       </Panel>
-      <div className="space-y-4">
-        <Panel title="Claude" icon={<Sparkles className="h-5 w-5" />}>
-          {ai === null ? (
-            <Spinner />
-          ) : ai.enabled ? (
-            <p className="text-sm text-ink">
-              Connected using <code className="rounded bg-[rgb(55_53_47/0.06)] px-1">{ai.model}</code>. Find leads, AI quick-add and AI audits are on.
-            </p>
-          ) : (
-            <p className="text-sm text-ink">
-              Not connected. Create a key at <span className="font-semibold">console.anthropic.com</span>, then add it as{" "}
-              <code className="rounded bg-[rgb(55_53_47/0.06)] px-1">ANTHROPIC_API_KEY</code> on your Render API service.
-            </p>
-          )}
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <Panel title="Pipeline stages" icon={<ArrowDown className="h-5 w-5" />} description="Rename, recolor, reorder or add the columns on your board.">
+          <StagesEditor />
         </Panel>
-        <Panel
-          title="AI agent access"
-          icon={<Bot className="h-5 w-5" />}
-          description="Let Claude (or any AI agent) add and update leads on your board through the API."
-        >
-          <ApiKeys />
-        </Panel>
+        <div className="space-y-4">
+          <Panel
+            title="AI agent access"
+            icon={<Bot className="h-5 w-5" />}
+            description="Let Claude find and update leads for you, using the Claude plan you already have."
+          >
+            <ApiKeys />
+          </Panel>
+          <Panel title="In-app Claude buttons (optional)" icon={<Sparkles className="h-5 w-5" />}>
+            {ai === null ? (
+              <Spinner className="h-4 w-4" />
+            ) : ai.enabled ? (
+              <p className="text-sm text-ink">
+                On, using <code className="rounded bg-[rgb(55_53_47/0.06)] px-1">{ai.model}</code>. Find leads, Paste &amp; let Claude fill it, and Audit with Claude work inside the app.
+              </p>
+            ) : (
+              <p className="text-sm text-muted">
+                Off. The Find leads, Paste &amp; let Claude fill it, and Audit with Claude buttons need a paid Anthropic API key. You don't need them: Claude Code can do the same work
+                through your agent key. To turn them on later, create a key at console.anthropic.com and add it as{" "}
+                <code className="rounded bg-[rgb(55_53_47/0.06)] px-1 text-ink">ANTHROPIC_API_KEY</code> on your Render API service.
+              </p>
+            )}
+          </Panel>
+        </div>
       </div>
-    </div>
     </div>
   );
 }
