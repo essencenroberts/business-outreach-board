@@ -94,7 +94,8 @@ export function FindLeadsModal({
     setShowRequest(false);
   }, [open]);
 
-  const request = `Find ${count} ${category.trim() || "[type of business]"} in ${area.trim() || "[area]"} (St. Louis, MO) that ${FOCUS[focus]}, and add them to my Business Outreach Board with research notes.${
+  const typeText = category.trim() ? category.trim().charAt(0).toLowerCase() + category.trim().slice(1) : "[type of business]";
+  const request = `Find ${count} ${typeText} in ${area.trim() || "[area]"} (St. Louis, MO) that ${FOCUS[focus]}, and add them to my Business Outreach Board with research notes.${
     extra.trim() ? ` Also: ${extra.trim().replace(/\.$/, "")}.` : ""
   }`;
 
@@ -210,7 +211,7 @@ export function FindLeadsModal({
               ? "Claude searches the web live. This usually takes 1–3 minutes and costs a few cents."
               : "Builds a request for Claude Code, which researches and adds the leads using your Claude plan."}
           </p>
-          <Button type="submit" variant="primary" loading={searching}>
+          <Button type="submit" variant="primary" loading={searching} className="shrink-0 whitespace-nowrap">
             {aiEnabled ? <Sparkles className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             {searching ? "Searching…" : aiEnabled ? "Find leads" : "Create & copy request"}
           </Button>
