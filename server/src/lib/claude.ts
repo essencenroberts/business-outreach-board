@@ -226,3 +226,73 @@ export async function extractBusiness(text: string) {
     text,
   );
 }
+
+const PITCH_GUIDE = `Write a short, personal cold email from a St. Louis web designer and digital marketer to a local small business owner.
+- 110 to 170 words. Warm, plain, confident. No hype, no jargon, no exclamation-mark spam.
+- Open with something specific and genuine about their business (from the notes), not "I hope this finds you well".
+- Name 1 to 3 concrete gaps you actually found (e.g. no website, site not mobile friendly, no way to book online, no email list), framed as missed customers, not insults.
+- Offer one clear next step: a free 15-minute call or a quick mockup. Include the booking link if provided.
+- Sign off with the sender's details. If a detail is missing, leave it out rather than inventing it or using brackets.
+- Subject line: under 60 characters, specific to them, not salesy.`;
+
+const pitchSchema = z.object({
+  subject: z.string(),
+  body: z.string().describe("Plain-text email body with line breaks, including greeting and signature"),
+});
+export type Pitch = z.infer<typeof pitchSchema>;
+
+export async function draftPitch(
+  b: {
+    name: string;
+    contactName?: string;
+    category?: string;
+    neighborhood?: string;
+    website?: string;
+    researchNotes?: string;
+    auditSummary?: string;
+    services?: string[];
+    audit?: Record<string, string>;
+  },
+  sender: { name: string; businessName: string; website: string; phone: string; email: string; offer: string; bookingLink: string },
+  recentNotes: string[],
+) {
+  const missing = Object.entries(b.audit ?? {})
+    .filter(([, v]) => v === "no")
+    .map(([k]) => k)
+    .join(", ");
+  const facts = `Business: ${b.name}${b.category ? ` (${b.category})` : ""}${b.neighborhood ? `, ${b.neighborhood}` : ""}
+Owner/contact: ${b.contactName || "unknown"}
+Website: ${b.website || "none found"}
+Missing (from audit): ${missing || "not audited"}
+Services to pitch: ${(b.services ?? []).join(", ") || "not chosen"}
+
+Research notes:
+${b.researchNotes || "(none)"}
+
+Audit summary:
+${b.auditSummary || "(none)"}
+
+Recent activity:
+${recentNotes.join("\n") || "(none)"}
+
+Sender:
+Name: ${sender.name || "(not set)"}
+Business: ${sender.businessName || "(not set)"}
+Website: ${sender.website || "(not set)"}
+Phone: ${sender.phone || "(not set)"}
+Email: ${sender.email || "(not set)"}
+Booking link: ${sender.bookingLink || "(not set)"}
+What they offer: ${sender.offer || "(not set)"}`;
+
+  const anthropic = getClient();
+  const response = await anthropic.beta.messages.parse({
+    ...FALLBACK,
+    model: config.claudeModel,
+    max_tokens: 4000,
+    output_config: { effort: "medium", format: betaZodOutputFormat(pitchSchema) },
+    messages: [{ role: "user", content: `${PITCH_GUIDE}\n\nUse only these facts:\n\n<facts>\n${facts}\n</facts>` }],
+  });
+  assertNotRefused(response);
+  if (!response.parsed_output) throw new HttpError(502, "Claude's answer couldn't be read. Try again.");
+  return response.parsed_output;
+}

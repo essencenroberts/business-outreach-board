@@ -1,10 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, BookOpen, Bot, ChevronRight, Copy, KeyRound, Plus, ShieldCheck, Sparkles, Terminal, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, BookOpen, Bot, UserRound, ChevronRight, Copy, KeyRound, Plus, ShieldCheck, Sparkles, Terminal, Trash2 } from "lucide-react";
 import { PUBLIC_API_BASE, api } from "../lib/api";
 import { copyShortcut, copyText } from "../lib/clipboard";
-import type { ApiKeyInfo, Stage } from "../lib/types";
-import { Button, Field, Input, Spinner, formatDate } from "../components/ui";
+import type { ApiKeyInfo, Profile, Stage } from "../lib/types";
+import { Button, Field, Input, Spinner, Textarea, formatDate } from "../components/ui";
 
 function Panel({ title, icon, children, description }: { title: string; icon: ReactNode; description?: string; children: ReactNode }) {
   return (
@@ -288,7 +288,7 @@ const EXAMPLE_ASKS = [
   "Add a note to Mauki's Bakery: called, owner wants a quote for online pre-orders.",
   "Which leads have follow-ups due this week?",
   "Check the websites of everything in Researching and update their audits.",
-  "Draft a short outreach email for The Benton Park Baker based on my notes.",
+  "Draft email pitches for everything in Researching that's been audited.",
 ];
 
 function Step({ n, title, children }: { n: number; title: string; children: ReactNode }) {
@@ -317,6 +317,73 @@ function CopyLine({ text }: { text: string }) {
   );
 }
 
+function ProfileEditor() {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    api
+      .get<Profile>("/settings/profile")
+      .then(setProfile)
+      .catch(() => setProfile({ name: "", businessName: "", website: "", phone: "", email: "", offer: "", bookingLink: "" }));
+  }, []);
+
+  if (!profile) return <Spinner className="h-4 w-4" />;
+
+  const set = (key: keyof Profile) => (e: { target: { value: string } }) => setProfile({ ...profile, [key]: e.target.value });
+
+  async function save() {
+    if (!profile) return;
+    setSaving(true);
+    try {
+      setProfile(await api.put<Profile>("/settings/profile", profile));
+      toast.success("Saved. New pitches will be signed with these details.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Your name">
+          <Input value={profile.name} onChange={set("name")} placeholder="e.g. Essence Roberts" />
+        </Field>
+        <Field label="Business name">
+          <Input value={profile.businessName} onChange={set("businessName")} placeholder="e.g. Essence Digital Studio" />
+        </Field>
+        <Field label="Your website">
+          <Input value={profile.website} onChange={set("website")} placeholder="e.g. essencedigital.com" />
+        </Field>
+        <Field label="Phone">
+          <Input type="tel" value={profile.phone} onChange={set("phone")} />
+        </Field>
+        <Field label="Email">
+          <Input type="email" value={profile.email} onChange={set("email")} />
+        </Field>
+        <Field label="Booking link (for a free call)">
+          <Input value={profile.bookingLink} onChange={set("bookingLink")} placeholder="e.g. calendly.com/you/15min" />
+        </Field>
+      </div>
+      <Field label="What you offer (one or two sentences)">
+        <Textarea
+          rows={2}
+          value={profile.offer}
+          onChange={set("offer")}
+          placeholder="e.g. I build mobile-friendly websites for St. Louis small businesses, with online booking, email signup and local SEO built in."
+        />
+      </Field>
+      <div className="flex justify-end">
+        <Button size="sm" variant="primary" onClick={save} loading={saving}>
+          Save my info
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 const WORKFLOW = [
   {
     title: "1. Find leads",
@@ -327,8 +394,8 @@ const WORKFLOW = [
     body: "Open a card. In Website audit, run Quick site check (free) or mark each item Has it / Missing. The opportunity score goes up the more they're missing: pink 60+ is a hot lead, yellow 30–59 is worth a look, lime is lower.",
   },
   {
-    title: "3. Reach out and log it",
-    body: "Email or call, then add an entry in Notes & activity and pick Emailed, Called or Meeting. Drag the card to the matching column and set a Follow up date.",
+    title: "3. Pitch, reach out, log it",
+    body: "In Notes & activity, click Draft with Claude to write a personal email pitch, then copy it or open it in Mail. After you email or call, log it (Emailed, Called, Meeting), drag the card to the matching column and set a Follow up date.",
   },
   {
     title: "4. Follow up and close",
@@ -360,6 +427,16 @@ export function SettingsPage() {
           ))}
         </div>
       </Panel>
+
+      <div className="mt-4">
+        <Panel
+          title="Your info for email pitches"
+          icon={<UserRound className="h-5 w-5" />}
+          description="Claude signs every pitch with these details. Leave a field empty and it's simply left out."
+        >
+          <ProfileEditor />
+        </Panel>
+      </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <Panel title="Pipeline stages" icon={<ArrowDown className="h-5 w-5" />} description="Rename, recolor, reorder or add the columns on your board.">

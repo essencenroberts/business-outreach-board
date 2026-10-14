@@ -2,7 +2,9 @@ import { Router } from "express";
 import { z } from "zod";
 import { Business } from "../models/Business.js";
 import { logActivity } from "../models/Activity.js";
-import { aiEnabled, auditBusiness, extractBusiness, findLeads } from "../lib/claude.js";
+import { aiEnabled, auditBusiness, draftPitch, extractBusiness, findLeads } from "../lib/claude.js";
+import { Activity } from "../models/Activity.js";
+import { getProfile } from "../models/Settings.js";
 import { findDuplicate, updateBusiness } from "../lib/businessService.js";
 import { HttpError } from "../lib/errors.js";
 import { config } from "../config.js";
@@ -69,6 +71,34 @@ router.post("/audit/:id", async (req, res) => {
   doc.auditedAt = new Date();
   await doc.save();
   await logActivity(doc._id, "audit", `Claude audit (opportunity score ${doc.opportunityScore}):\n${summary}`, "Claude");
+  res.json(doc);
+});
+
+/** Claude drafts an email pitch from the business's research, audit and notes, and saves it. */
+router.post("/pitch/:id", async (req, res) => {
+  const doc = await Business.findById(req.params.id);
+  if (!doc) throw new HttpError(404, "Business not found");
+  const notes = await Activity.find({ business: doc._id, type: { $in: ["note", "email", "call", "meeting"] } })
+    .sort({ createdAt: -1 })
+    .limit(10)
+    .lean();
+  const pitch = await draftPitch(
+    {
+      name: doc.name,
+      contactName: doc.contactName,
+      category: doc.category,
+      neighborhood: doc.neighborhood,
+      website: doc.website,
+      researchNotes: doc.researchNotes,
+      auditSummary: doc.auditSummary,
+      services: doc.services,
+      audit: (doc.toObject().audit ?? {}) as Record<string, string>,
+    },
+    await getProfile(),
+    notes.map((n) => `${n.type}: ${n.text}`),
+  );
+  await updateBusiness(doc, { pitchSubject: pitch.subject, pitchEmail: pitch.body });
+  await logActivity(doc._id, "note", "Drafted an email pitch (see Email pitch)", "Claude");
   res.json(doc);
 });
 

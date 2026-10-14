@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { Business } from "../models/Business.js";
 import { Activity, logActivity } from "../models/Activity.js";
-import { getStages } from "../models/Settings.js";
+import { getProfile, getStages } from "../models/Settings.js";
 import { createBusiness, findDuplicate, updateBusiness } from "../lib/businessService.js";
 import { createBusinessSchema, noteSchema, updateBusinessSchema } from "../lib/validation.js";
 import { AUDIT_KEYS, SERVICES } from "../lib/constants.js";
@@ -26,19 +26,26 @@ router.get("/", async (_req, res) => {
       "POST /api/agent/leads": "Create a lead (or {leads:[...]} for many). Duplicates are skipped.",
       "PATCH /api/agent/leads/:id": "Update fields, e.g. {status:'contacted_email'}",
       "POST /api/agent/leads/:id/notes": "Add a note: {text, type?: note|email|call|meeting}",
+      "GET /api/agent/profile": "The user's own details (name, business, website, phone, offer) for signing email pitches",
     },
+    pitches:
+      "To save an email pitch for a lead, PATCH /api/agent/leads/:id with {pitchSubject, pitchEmail}. Sign it with the profile details.",
     leadFields: {
       name: "required",
       optional: [
         "category", "contactName", "phone", "email", "address", "neighborhood", "city", "state", "zip",
         "website", "socials{facebook,instagram,tiktok,linkedin,youtube,googleBusiness,yelp}", "status",
-        "researchNotes", "services[]", "tags[]", "priority(low|medium|high)", "followUpDate(ISO date)",
+        "researchNotes", "pitchSubject", "pitchEmail", "services[]", "tags[]", "priority(low|medium|high)", "followUpDate(ISO date)",
         `audit{${AUDIT_KEYS.join(",")}} each yes|no|unknown (yes = they have it, no = missing/opportunity)`,
       ],
       services: SERVICES,
     },
     stages: await getStages(),
   });
+});
+
+router.get("/profile", async (_req, res) => {
+  res.json(await getProfile());
 });
 
 router.get("/stages", async (_req, res) => {
@@ -83,7 +90,9 @@ router.post("/leads", async (req, res) => {
 router.patch("/leads/:id", async (req, res) => {
   const doc = await Business.findById(req.params.id);
   if (!doc) throw new HttpError(404, "Lead not found");
-  await updateBusiness(doc, updateBusinessSchema.parse(req.body), agentName(res));
+  const patch = updateBusinessSchema.parse(req.body);
+  await updateBusiness(doc, patch, agentName(res));
+  if (patch.pitchEmail) await logActivity(doc._id, "note", "Drafted an email pitch (see Email pitch)", agentName(res));
   res.json(doc);
 });
 

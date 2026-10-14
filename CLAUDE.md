@@ -23,6 +23,7 @@ The user asks in plain English: "find 10 nail salons in North City with no websi
 | `POST /leads` | One lead, or `{ "leads": [...] }` for many. Duplicates (same name, phone or website) are skipped and reported. |
 | `PATCH /leads/:id` | Update fields or move stages, e.g. `{"status":"contacted_email","followUpDate":"2026-10-20"}` |
 | `POST /leads/:id/notes` | `{ "text": "...", "type": "note" | "email" | "call" | "meeting" }` |
+| `GET /profile` | The user's own details (name, business, website, phone, email, booking link, offer) for signing pitches |
 
 Lead fields: `name` (required), `category`, `contactName`, `phone`, `email`, `address`, `neighborhood`, `zip`, `website`, `socials{facebook,instagram,tiktok,linkedin,youtube,googleBusiness,yelp}`, `researchNotes`, `services[]` (Website build, Website redesign, SEO, Email marketing, Lead magnet, Social media, Content creation, Google Business Profile, Branding), `tags[]`, `priority` (low|medium|high), `followUpDate`, and `audit{hasWebsite, mobileResponsive, ssl, seoBasics, customerJourney, leadMagnet, emailCapture, socialMedia, contentQuality, googleProfile}` with each `yes` (they have it), `no` (missing, which is the opportunity) or `unknown`. The opportunity score is computed from the audit.
 
@@ -44,5 +45,22 @@ Many are individuals who work from home, a salon suite, or on the go, so they ra
 - Real estate agents and loan officers usually have a brokerage profile page. That counts as a weak website (generic template, no personal brand or lead capture), not a strong one. Prioritize agents who rely on it alone.
 - Use the person's business name if they have one, otherwise their name plus specialty (e.g. "Jasmine Carter, Loc Stylist"), and fill in `contactName`.
 - For home-based providers, use the neighborhood or service area, not a home address, even if you find one.
+
+## Drafting email pitches
+
+When asked to draft a pitch (the app's "Draft with Claude" button gives a request naming the lead and its id):
+
+1. `GET /leads/:id` for the research notes, audit, audit summary, services and activity. `GET /profile` for the sender's details.
+2. Write a short, personal cold email from the user to the business owner:
+   - 110–170 words, warm and plain, no hype or jargon. Address the owner by first name if known.
+   - Open with something specific and genuine about their business, taken from the research.
+   - Name 1–3 concrete gaps you actually found (no website, not mobile friendly, no online booking or ordering, no email list), framed as missed customers, never as insults.
+   - One clear next step: a free 15-minute call (include the booking link if the profile has one) or a quick mockup.
+   - Sign with the profile details. Leave out anything that's empty; never use "[Your name]" placeholders or invent details.
+   - Subject line under 60 characters, specific to them, not salesy.
+3. Save it with `PATCH /leads/:id` `{ "pitchSubject": "...", "pitchEmail": "..." }` (plain text with line breaks). This also logs "Drafted an email pitch" in their activity.
+4. Show the user the pitch in your reply and point out anything they should check (e.g. if the profile is empty, tell them to fill in **Settings → Your info for email pitches**).
+
+For batch requests ("draft pitches for everything in Researching that's been audited"), skip leads with no research notes and no audit, and list which ones you skipped.
 
 The user prefers plain language and wants to be told clearly what is verified versus a guess.

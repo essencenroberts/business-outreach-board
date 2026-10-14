@@ -1,11 +1,12 @@
 import crypto from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
-import { Settings, getStages } from "../models/Settings.js";
+import { Settings, getProfile, getStages } from "../models/Settings.js";
 import { Business } from "../models/Business.js";
 import { ApiKey } from "../models/ApiKey.js";
 import { sha256 } from "../middleware/auth.js";
 import { SERVICES } from "../lib/constants.js";
+import { profileSchema } from "../lib/validation.js";
 import { HttpError } from "../lib/errors.js";
 
 const router = Router();
@@ -33,6 +34,17 @@ router.put("/stages", async (req, res) => {
   // Cards in a removed stage go to the first stage so nothing disappears.
   await Business.updateMany({ status: { $nin: stages.map((s) => s.id) } }, { status: stages[0].id });
   res.json(stages);
+});
+
+router.get("/profile", async (_req, res) => {
+  res.json(await getProfile());
+});
+
+router.put("/profile", async (req, res) => {
+  const profile = profileSchema.parse(req.body);
+  const set = Object.fromEntries(Object.entries(profile).map(([k, v]) => [`profile.${k}`, v]));
+  await Settings.updateOne({ key: "main" }, { $set: set }, { upsert: true });
+  res.json(await getProfile());
 });
 
 router.get("/services", (_req, res) => {

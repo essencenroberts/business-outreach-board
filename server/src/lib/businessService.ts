@@ -58,6 +58,7 @@ function applyPatch(doc: BusinessDoc, patch: UpdateBusinessInput) {
   if (socials) for (const [k, v] of Object.entries(socials)) doc.set(`socials.${k}`, v);
   if (followUpDate !== undefined) doc.set("followUpDate", followUpDate ?? undefined);
   if (lastContactedAt !== undefined) doc.set("lastContactedAt", lastContactedAt ?? undefined);
+  if (patch.pitchEmail !== undefined || patch.pitchSubject !== undefined) doc.set("pitchUpdatedAt", new Date());
 }
 
 export async function createBusiness(input: CreateBusinessInput, author = "you") {

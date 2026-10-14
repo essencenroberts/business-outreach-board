@@ -62,6 +62,9 @@ export interface Business {
   auditedAt?: string;
   opportunityScore: number;
   researchNotes: string;
+  pitchSubject?: string;
+  pitchEmail?: string;
+  pitchUpdatedAt?: string;
   services: string[];
   tags: string[];
   priority: Priority;
@@ -116,4 +119,14 @@ export interface ApiKeyInfo {
   createdAt: string;
   lastUsedAt?: string;
   key?: string;
+}
+
+export interface Profile {
+  name: string;
+  businessName: string;
+  website: string;
+  phone: string;
+  email: string;
+  offer: string;
+  bookingLink: string;
 }

@@ -34,6 +34,8 @@ export const businessFields = z.object({
   audit: auditSchema,
   auditSummary: str(20000),
   researchNotes: str(100000),
+  pitchSubject: str(300),
+  pitchEmail: str(20000),
   services: z.array(str(100)).max(30),
   tags: z.array(str(50)).max(30),
   priority: z.enum(PRIORITIES),
@@ -58,3 +60,14 @@ export const reorderSchema = z.object({
     .array(z.object({ id: z.string(), status: str(100), order: z.number() }))
     .max(2000),
 });
+
+export const profileSchema = z.object({
+  name: str(120),
+  businessName: str(160),
+  website: str(300),
+  phone: str(50),
+  email: str(200),
+  offer: str(2000),
+  bookingLink: str(500),
+}).partial();
+export type Profile = z.infer<typeof profileSchema>;

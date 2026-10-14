@@ -238,6 +238,7 @@ export function BoardPage() {
           onClose={() => setOpenId(null)}
           onChange={upsert}
           onDelete={remove}
+          onRefresh={load}
         />
       )}
       <AddBusinessModal

@@ -31,6 +31,7 @@ import {
 import { api } from "../lib/api";
 import { CATEGORY_GROUPS } from "../lib/options";
 import { GroupedPicker } from "./GroupedPicker";
+import { EmailPitch } from "./EmailPitch";
 import {
   AUDIT_ITEMS,
   SERVICES,
@@ -143,6 +144,7 @@ export function BusinessDrawer({
   onClose,
   onChange,
   onDelete,
+  onRefresh,
 }: {
   business: Business;
   stages: Stage[];
@@ -150,6 +152,7 @@ export function BusinessDrawer({
   onClose: () => void;
   onChange: (b: Business) => void;
   onDelete: (id: string) => void;
+  onRefresh: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("notes");
   const [showSocials, setShowSocials] = useState(false);
@@ -495,6 +498,20 @@ export function BusinessDrawer({
                   onCommit={(researchNotes) => save({ researchNotes })}
                 />
               </div>
+
+              <EmailPitch
+                business={business}
+                aiEnabled={aiEnabled}
+                onSave={save}
+                onChange={(b) => {
+                  onChange(b);
+                  loadActivity();
+                }}
+                onRefresh={() => {
+                  onRefresh();
+                  loadActivity();
+                }}
+              />
 
               <div className="rounded-lg border border-line bg-white p-2.5 shadow-[0_1px_2px_rgb(15_15_15/0.04)]">
                 <Textarea
