@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import clsx from "clsx";
 import { toast } from "sonner";
-import { Check, Globe, GlobeLock, MapPin, Phone, Sparkles } from "lucide-react";
+import { Check, Copy, Globe, GlobeLock, MapPin, Phone, RefreshCw, Sparkles } from "lucide-react";
 import { api } from "../lib/api";
 import type { Business, BusinessInput, LeadCandidate } from "../lib/types";
 import { Button, Field, Input, Modal, Select, externalUrl } from "./ui";
@@ -59,19 +59,31 @@ const AREAS = [
 
 type Candidate = LeadCandidate & { selected: boolean };
 
+const FOCUS = {
+  both: "have no website or a weak website (not mobile friendly, poor SEO, no clear way to book or buy, no email signup)",
+  none: "have no website of their own",
+  weak: "have a weak website (not mobile friendly, poor SEO, no clear way to book or buy, no email signup)",
+} as const;
+
 export function FindLeadsModal({
   open,
   onClose,
   onAdded,
+  onRefresh,
+  aiEnabled,
 }: {
   open: boolean;
   onClose: () => void;
   onAdded: (created: Business[]) => void;
+  onRefresh: () => void;
+  aiEnabled: boolean;
 }) {
   const [category, setCategory] = useState("");
   const [area, setArea] = useState("");
   const [count, setCount] = useState(8);
   const [extra, setExtra] = useState("");
+  const [focus, setFocus] = useState<keyof typeof FOCUS>("both");
+  const [showRequest, setShowRequest] = useState(false);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState(false);
   const [results, setResults] = useState<Candidate[] | null>(null);
@@ -79,14 +91,32 @@ export function FindLeadsModal({
   useEffect(() => {
     if (!open) return;
     setResults(null);
+    setShowRequest(false);
   }, [open]);
+
+  const request = `Find ${count} ${category.trim() || "[type of business]"} in ${area.trim() || "[area]"} (St. Louis, MO) that ${FOCUS[focus]}, and add them to my Business Outreach Board with research notes.${
+    extra.trim() ? ` Also: ${extra.trim().replace(/\.$/, "")}.` : ""
+  }`;
 
   async function search(e: FormEvent) {
     e.preventDefault();
+    if (!aiEnabled) {
+      setShowRequest(true);
+      navigator.clipboard.writeText(request).then(
+        () => toast.success("Request copied. Paste it into Claude Code."),
+        () => null,
+      );
+      return;
+    }
     setSearching(true);
     setResults(null);
     try {
-      const res = await api.post<{ leads: LeadCandidate[] }>("/ai/find", { category, area, count, extra: extra || undefined });
+      const res = await api.post<{ leads: LeadCandidate[] }>("/ai/find", {
+        category,
+        area,
+        count,
+        extra: [`Only include businesses that ${FOCUS[focus]}.`, extra.trim()].filter(Boolean).join(" "),
+      });
       setResults(res.leads.map((l) => ({ ...l, selected: !l.duplicateOf })));
       if (!res.leads.length) toast.info("Claude didn't find matching businesses. Try a broader area or category.");
     } catch (err) {
@@ -137,7 +167,7 @@ export function FindLeadsModal({
   const selectedCount = results?.filter((r) => r.selected && !r.duplicateOf).length ?? 0;
 
   return (
-    <Modal open={open} onClose={searching ? () => {} : onClose} title="Find leads with Claude" wide>
+    <Modal open={open} onClose={searching ? () => {} : onClose} title={aiEnabled ? "Find leads with Claude" : "Find leads with Claude Code"} wide>
       <form onSubmit={search} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
         <Field label="Type of business">
           <Input list="bob-categories" required value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Barbershops" />
@@ -164,16 +194,66 @@ export function FindLeadsModal({
             ))}
           </Select>
         </Field>
+        <Field label="Look for businesses that…" className="sm:col-span-3">
+          <Select value={focus} onChange={(e) => setFocus(e.target.value as keyof typeof FOCUS)}>
+            <option value="both">Have no website or a weak one</option>
+            <option value="none">Have no website at all</option>
+            <option value="weak">Have a weak website</option>
+          </Select>
+        </Field>
         <Field label="Anything else? (optional)" className="sm:col-span-3">
           <Input value={extra} onChange={(e) => setExtra(e.target.value)} placeholder="e.g. Black-owned, opened in the last 2 years, only ones with no website" />
         </Field>
         <div className="flex items-center justify-between gap-3 sm:col-span-3">
-          <p className="text-xs text-muted">Claude searches the web live. This usually takes 1–3 minutes and costs a few cents.</p>
+          <p className="text-xs text-muted">
+            {aiEnabled
+              ? "Claude searches the web live. This usually takes 1–3 minutes and costs a few cents."
+              : "Builds a request for Claude Code, which researches and adds the leads using your Claude plan."}
+          </p>
           <Button type="submit" variant="primary" loading={searching}>
-            <Sparkles className="h-4 w-4" /> {searching ? "Searching…" : "Find leads"}
+            {aiEnabled ? <Sparkles className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            {searching ? "Searching…" : aiEnabled ? "Find leads" : "Create & copy request"}
           </Button>
         </div>
       </form>
+
+      {!aiEnabled && showRequest && (
+        <div className="mt-5 rounded-lg border border-line bg-white/80 p-4">
+          <p className="text-xs font-medium text-muted">Your request (copied)</p>
+          <div className="mt-1.5 flex items-start gap-2 rounded-md bg-pink-50 p-3 text-sm text-ink">
+            <p className="min-w-0 flex-1">{request}</p>
+            <Button
+              size="sm"
+              onClick={() => navigator.clipboard.writeText(request).then(() => toast.success("Copied"), () => toast.error("Couldn't copy"))}
+            >
+              <Copy className="h-3.5 w-3.5" /> Copy
+            </Button>
+          </div>
+          <ol className="mt-3 space-y-1.5 text-sm text-muted">
+            <li>
+              <span className="font-medium text-ink">1.</span> Open Claude Code in your <code className="rounded bg-[rgb(55_53_47/0.06)] px-1 text-xs">business-outreach-board</code> folder.
+            </li>
+            <li>
+              <span className="font-medium text-ink">2.</span> Paste the request and send it. Claude researches each business and adds them to Researching (a few minutes).
+            </li>
+            <li>
+              <span className="font-medium text-ink">3.</span> When Claude says it's done, refresh the board.
+            </li>
+          </ol>
+          <div className="mt-3 flex justify-end">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                onRefresh();
+                onClose();
+              }}
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> Claude's done, refresh board
+            </Button>
+          </div>
+        </div>
+      )}
 
       {searching && (
         <div className="mt-6 space-y-2">

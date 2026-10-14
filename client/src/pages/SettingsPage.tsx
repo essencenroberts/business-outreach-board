@@ -321,7 +321,7 @@ function CopyLine({ text }: { text: string }) {
 const WORKFLOW = [
   {
     title: "1. Find leads",
-    body: "Ask Claude Code to research businesses for you (see AI agent access), or click New on the board to add one yourself. Everything new lands in Researching.",
+    body: "Click Find leads on the board, pick a business type and area, and paste the request it copies into Claude Code. Or click New to add one yourself. Everything new lands in Researching.",
   },
   {
     title: "2. Research and audit",

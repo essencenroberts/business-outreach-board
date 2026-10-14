@@ -197,8 +197,7 @@ export function BoardPage() {
             variant="ghost"
             size="sm"
             onClick={() => setShowFind(true)}
-            disabled={!aiEnabled}
-            title={aiEnabled ? "Let Claude search the web for prospects" : "Add ANTHROPIC_API_KEY on the server to enable"}
+            title={aiEnabled ? "Let Claude search the web for prospects" : "Build a lead request for Claude Code"}
           >
             <Sparkles className="h-3.5 w-3.5" /> Find leads
           </Button>
@@ -242,7 +241,13 @@ export function BoardPage() {
         />
       )}
       <AddBusinessModal open={showAdd} onClose={() => setShowAdd(false)} stages={stages} aiEnabled={aiEnabled} onCreated={upsert} />
-      <FindLeadsModal open={showFind} onClose={() => setShowFind(false)} onAdded={(created) => created.forEach(upsert)} />
+      <FindLeadsModal
+        open={showFind}
+        onClose={() => setShowFind(false)}
+        onAdded={(created) => created.forEach(upsert)}
+        onRefresh={load}
+        aiEnabled={aiEnabled}
+      />
     </div>
   );
 }
