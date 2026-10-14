@@ -240,7 +240,14 @@ export function BoardPage() {
           onDelete={remove}
         />
       )}
-      <AddBusinessModal open={showAdd} onClose={() => setShowAdd(false)} stages={stages} aiEnabled={aiEnabled} onCreated={upsert} />
+      <AddBusinessModal
+        open={showAdd}
+        onClose={() => setShowAdd(false)}
+        stages={stages}
+        aiEnabled={aiEnabled}
+        onCreated={upsert}
+        onRefresh={load}
+      />
       <FindLeadsModal
         open={showFind}
         onClose={() => setShowFind(false)}

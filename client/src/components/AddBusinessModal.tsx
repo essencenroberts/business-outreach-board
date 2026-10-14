@@ -1,10 +1,11 @@
 import { useEffect, useState, type FormEvent } from "react";
 import clsx from "clsx";
 import { toast } from "sonner";
-import { PenLine, Sparkles } from "lucide-react";
+import { Copy, PenLine, Sparkles } from "lucide-react";
 import { ApiError, api } from "../lib/api";
 import type { AuditValue, Business, BusinessInput, Socials, Stage } from "../lib/types";
 import { Button, Field, Input, Modal, Select, Textarea } from "./ui";
+import { ClaudeCodeRequest, useCopyRequest } from "./ClaudeCodeRequest";
 
 interface Draft {
   name: string;
@@ -51,12 +52,14 @@ export function AddBusinessModal({
   stages,
   aiEnabled,
   onCreated,
+  onRefresh,
 }: {
   open: boolean;
   onClose: () => void;
   stages: Stage[];
   aiEnabled: boolean;
   onCreated: (b: Business) => void;
+  onRefresh: () => void;
 }) {
   const firstStage = stages[0]?.id ?? "researching";
   const [mode, setMode] = useState<"manual" | "ai">("manual");
@@ -65,6 +68,9 @@ export function AddBusinessModal({
   const [pasted, setPasted] = useState("");
   const [duplicate, setDuplicate] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showRequest, setShowRequest] = useState(false);
+  const request = `Add this business to my Business Outreach Board. Use the details below, look up anything missing (website, phone, address, social links), check their website and fill in the audit, and add research notes.\n\n${pasted.trim()}`;
+  const { copied, copyRequest, requestRef } = useCopyRequest(request);
 
   useEffect(() => {
     if (open) {
@@ -72,6 +78,7 @@ export function AddBusinessModal({
       setPasted("");
       setDuplicate(null);
       setFromAi(false);
+      setShowRequest(false);
       setMode("manual");
     }
   }, [open, firstStage]);
@@ -125,7 +132,7 @@ export function AddBusinessModal({
         {(
           [
             ["manual", "Fill in manually", PenLine],
-            ["ai", "Paste & let Claude fill it", Sparkles],
+            ["ai", aiEnabled ? "Paste & let Claude fill it" : "Paste & send to Claude Code", Sparkles],
           ] as const
         ).map(([key, label, Icon]) => (
           <button
@@ -144,25 +151,49 @@ export function AddBusinessModal({
       {mode === "ai" ? (
         <div className="space-y-3">
           <p className="text-sm text-muted">
-            Paste anything about the business: a Google Maps or Yelp listing, their Instagram bio, a URL, or your own rough notes. Claude
-            will pull out the details for you to review.
+            Paste anything about the business: a Google Maps or Yelp listing, their Instagram bio, a URL, or your own rough notes.{" "}
+            {aiEnabled
+              ? "Claude will pull out the details for you to review."
+              : "Claude Code will add it to your board, look up anything missing (website, phone, social links) and run a website audit."}
           </p>
           <Textarea
-            rows={8}
+            rows={7}
             value={pasted}
             onChange={(e) => setPasted(e.target.value)}
             placeholder={"e.g. Sweet Soulard Bakery, 1912 S 12th St, St. Louis MO 63104 · (314) 555-0142 · only has an Instagram @sweetsoulard, no website…"}
           />
-          {!aiEnabled && (
-            <p className="rounded-md bg-yellow-100 px-3 py-2 text-sm text-amber-800">
-              Claude isn't set up yet. Add ANTHROPIC_API_KEY to the API service on Render to turn this on.
-            </p>
-          )}
           <div className="flex justify-end">
-            <Button variant="primary" onClick={extract} loading={loading} disabled={!aiEnabled || pasted.trim().length < 3}>
-              <Sparkles className="h-4 w-4" /> Extract details
-            </Button>
+            {aiEnabled ? (
+              <Button variant="primary" onClick={extract} loading={loading} disabled={pasted.trim().length < 3}>
+                <Sparkles className="h-4 w-4" /> Extract details
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                className="whitespace-nowrap"
+                disabled={pasted.trim().length < 3}
+                onClick={() => {
+                  setShowRequest(true);
+                  copyRequest();
+                }}
+              >
+                <Copy className="h-4 w-4" /> Create & copy request
+              </Button>
+            )}
           </div>
+          {!aiEnabled && showRequest && pasted.trim().length >= 3 && (
+            <ClaudeCodeRequest
+              request={request}
+              copied={copied}
+              onCopy={copyRequest}
+              requestRef={requestRef}
+              whatHappens="Claude adds the business to Researching, fills in what's missing and audits their website (a minute or two)."
+              onDone={() => {
+                onRefresh();
+                onClose();
+              }}
+            />
+          )}
         </div>
       ) : (
         <form onSubmit={submit} className="space-y-3">

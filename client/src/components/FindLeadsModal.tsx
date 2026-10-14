@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import clsx from "clsx";
 import { toast } from "sonner";
-import { Check, Copy, Globe, GlobeLock, MapPin, Phone, RefreshCw, Sparkles } from "lucide-react";
+import { Check, Copy, Globe, GlobeLock, MapPin, Phone, Sparkles } from "lucide-react";
 import { api } from "../lib/api";
-import { copyShortcut, copyText, selectContents } from "../lib/clipboard";
+import { ClaudeCodeRequest, useCopyRequest } from "./ClaudeCodeRequest";
 import type { Business, BusinessInput, LeadCandidate } from "../lib/types";
 import { Button, Field, Input, Modal, Select, externalUrl } from "./ui";
 
@@ -85,8 +85,6 @@ export function FindLeadsModal({
   const [extra, setExtra] = useState("");
   const [focus, setFocus] = useState<keyof typeof FOCUS>("both");
   const [showRequest, setShowRequest] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const requestRef = useRef<HTMLTextAreaElement>(null);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState(false);
   const [results, setResults] = useState<Candidate[] | null>(null);
@@ -102,19 +100,7 @@ export function FindLeadsModal({
     extra.trim() ? ` Also: ${extra.trim().replace(/\.$/, "")}.` : ""
   }`;
 
-  useEffect(() => setCopied(false), [request]);
-
-  async function copyRequest() {
-    const ok = await copyText(request);
-    setCopied(ok);
-    if (ok) {
-      toast.success("Request copied. Paste it into Claude Code.");
-    } else {
-      // Clipboard blocked (some browsers and embedded panes): select it so the user can copy by hand.
-      setTimeout(() => selectContents(requestRef.current), 0);
-      toast.info(`Your browser blocked copying. The request is selected, so press ${copyShortcut} to copy it.`);
-    }
-  }
+  const { copied, copyRequest, requestRef } = useCopyRequest(request);
 
   async function search(e: FormEvent) {
     e.preventDefault();
@@ -233,45 +219,18 @@ export function FindLeadsModal({
       </form>
 
       {!aiEnabled && showRequest && (
-        <div className="mt-5 rounded-lg border border-line bg-white/80 p-4">
-          <p className="text-xs font-medium text-muted">{copied ? "Your request (copied)" : `Your request: click inside, then press ${copyShortcut}`}</p>
-          <div className="mt-1.5 flex items-start gap-2 rounded-md bg-pink-50 p-2 text-sm text-ink">
-            <textarea
-              ref={requestRef}
-              readOnly
-              value={request}
-              rows={3}
-              onFocus={(e) => e.currentTarget.select()}
-              aria-label="Request for Claude Code"
-              className="min-w-0 flex-1 resize-none border-0 bg-transparent p-1 text-sm leading-relaxed text-ink focus:outline-none"
-            />
-            <Button size="sm" onClick={copyRequest}>
-              <Copy className="h-3.5 w-3.5" /> Copy
-            </Button>
-          </div>
-          <ol className="mt-3 space-y-1.5 text-sm text-muted">
-            <li>
-              <span className="font-medium text-ink">1.</span> Open Claude Code in your <code className="rounded bg-[rgb(55_53_47/0.06)] px-1 text-xs">business-outreach-board</code> folder.
-            </li>
-            <li>
-              <span className="font-medium text-ink">2.</span> Paste the request and send it. Claude researches each business and adds them to Researching (a few minutes).
-            </li>
-            <li>
-              <span className="font-medium text-ink">3.</span> When Claude says it's done, refresh the board.
-            </li>
-          </ol>
-          <div className="mt-3 flex justify-end">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => {
-                onRefresh();
-                onClose();
-              }}
-            >
-              <RefreshCw className="h-3.5 w-3.5" /> Claude's done, refresh board
-            </Button>
-          </div>
+        <div className="mt-5">
+          <ClaudeCodeRequest
+            request={request}
+            copied={copied}
+            onCopy={copyRequest}
+            requestRef={requestRef}
+            whatHappens="Claude researches each business and adds them to Researching (a few minutes)."
+            onDone={() => {
+              onRefresh();
+              onClose();
+            }}
+          />
         </div>
       )}
 
