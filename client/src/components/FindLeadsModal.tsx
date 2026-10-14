@@ -4,123 +4,10 @@ import { toast } from "sonner";
 import { Check, Copy, Globe, GlobeLock, MapPin, Phone, Sparkles } from "lucide-react";
 import { api } from "../lib/api";
 import { ClaudeCodeRequest, useCopyRequest } from "./ClaudeCodeRequest";
+import { GroupedPicker } from "./GroupedPicker";
+import { AREA_GROUPS, CATEGORY_GROUPS } from "../lib/options";
 import type { Business, BusinessInput, LeadCandidate } from "../lib/types";
 import { Button, Field, Input, Modal, Select, externalUrl } from "./ui";
-
-/** Business types grouped for the picker. Service providers often work from home, a suite or on the go. */
-const CATEGORY_GROUPS: { group: string; options: string[] }[] = [
-  {
-    group: "Food & drink",
-    options: [
-      "Restaurants",
-      "Food trucks",
-      "Private & personal chefs",
-      "Caterers",
-      "Bakers & home bakeries",
-      "Bakeries",
-      "Coffee shops",
-      "Juice & smoothie shops",
-      "Dessert & sweets shops",
-      "Meal prep services",
-      "Mobile bartenders",
-    ],
-  },
-  {
-    group: "Beauty",
-    options: [
-      "Hair salons",
-      "Barbershops",
-      "Loc stylists",
-      "Braiders",
-      "Wig installers",
-      "Natural hair stylists",
-      "Nail salons & nail techs",
-      "Lash techs",
-      "Brow artists",
-      "Makeup artists",
-      "Estheticians & skincare studios",
-      "Med spas",
-      "Waxing studios",
-    ],
-  },
-  {
-    group: "Wellness & fitness",
-    options: [
-      "Personal trainers & fitness coaches",
-      "Gyms & boxing gyms",
-      "Yoga & pilates studios",
-      "Dance studios",
-      "Massage therapists",
-      "Doulas & birth workers",
-      "Nutritionists & health coaches",
-    ],
-  },
-  {
-    group: "Home services",
-    options: [
-      "Contractors & remodelers",
-      "Roofers",
-      "Landscapers & lawn care",
-      "House cleaners",
-      "HVAC & plumbers",
-      "Electricians",
-      "Handymen",
-      "Movers",
-      "Pressure washing",
-    ],
-  },
-  {
-    group: "Professional & creative",
-    options: [
-      "Real estate agents",
-      "Mortgage loan officers",
-      "Insurance agents",
-      "Tax preparers & bookkeepers",
-      "Notaries & mobile notaries",
-      "Photographers",
-      "Videographers",
-      "DJs",
-      "Event planners & decorators",
-      "Event venues",
-      "Florists",
-      "Tutors",
-      "Daycares & home childcare",
-      "Pet groomers & dog walkers",
-      "Auto repair & detailing",
-      "Boutiques",
-      "Churches & nonprofits",
-    ],
-  },
-];
-const OTHER = "__other";
-
-const AREAS = [
-  "St. Louis City",
-  "Soulard",
-  "Cherokee Street",
-  "Tower Grove South",
-  "The Grove",
-  "Central West End",
-  "Delmar Loop / University City",
-  "Benton Park",
-  "Lafayette Square",
-  "The Hill",
-  "Dogtown",
-  "Downtown St. Louis",
-  "North St. Louis",
-  "North County (Florissant, Ferguson)",
-  "South County",
-  "Maplewood",
-  "Kirkwood",
-  "Webster Groves",
-  "Clayton",
-  "Chesterfield",
-  "Ballwin / Manchester",
-  "St. Charles",
-  "O'Fallon, MO",
-  "Belleville, IL",
-  "Edwardsville, IL",
-];
 
 type Candidate = LeadCandidate & { selected: boolean };
 
@@ -143,9 +30,7 @@ export function FindLeadsModal({
   onRefresh: () => void;
   aiEnabled: boolean;
 }) {
-  const [categoryChoice, setCategoryChoice] = useState("");
-  const [customCategory, setCustomCategory] = useState("");
-  const category = categoryChoice === OTHER ? customCategory : categoryChoice;
+  const [category, setCategory] = useState("");
   const [area, setArea] = useState("");
   const [count, setCount] = useState(8);
   const [extra, setExtra] = useState("");
@@ -237,39 +122,26 @@ export function FindLeadsModal({
     <Modal open={open} onClose={searching ? () => {} : onClose} title={aiEnabled ? "Find leads with Claude" : "Find leads with Claude Code"} wide>
       <form onSubmit={search} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
         <Field label="Type of business">
-          <Select required value={categoryChoice} onChange={(e) => setCategoryChoice(e.target.value)}>
-            <option value="" disabled>
-              Choose a type…
-            </option>
-            {CATEGORY_GROUPS.map(({ group, options }) => (
-              <optgroup key={group} label={group}>
-                {options.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-            <option value={OTHER}>Something else…</option>
-          </Select>
-          {categoryChoice === OTHER && (
-            <Input
-              required
-              autoFocus
-              className="mt-1.5"
-              value={customCategory}
-              onChange={(e) => setCustomCategory(e.target.value)}
-              placeholder="e.g. Sneaker cleaners, tattoo artists"
-            />
-          )}
+          <GroupedPicker
+            required
+            value={category}
+            onChange={setCategory}
+            groups={CATEGORY_GROUPS}
+            placeholder="Choose a type…"
+            otherPlaceholder="e.g. Sneaker cleaners, tattoo artists"
+            ariaLabel="Type of business"
+          />
         </Field>
         <Field label="Area">
-          <Input list="bob-areas" required value={area} onChange={(e) => setArea(e.target.value)} placeholder="e.g. Cherokee Street" />
-          <datalist id="bob-areas">
-            {AREAS.map((a) => (
-              <option key={a} value={a} />
-            ))}
-          </datalist>
+          <GroupedPicker
+            required
+            value={area}
+            onChange={setArea}
+            groups={AREA_GROUPS}
+            placeholder="Choose an area…"
+            otherPlaceholder="e.g. Florissant, Overland, Granite City"
+            ariaLabel="Area"
+          />
         </Field>
         <Field label="How many">
           <Select value={count} onChange={(e) => setCount(Number(e.target.value))}>

@@ -6,6 +6,8 @@ import { ApiError, api } from "../lib/api";
 import type { AuditValue, Business, BusinessInput, Socials, Stage } from "../lib/types";
 import { Button, Field, Input, Modal, Select, Textarea } from "./ui";
 import { ClaudeCodeRequest, useCopyRequest } from "./ClaudeCodeRequest";
+import { GroupedPicker } from "./GroupedPicker";
+import { CATEGORY_GROUPS } from "../lib/options";
 
 interface Draft {
   name: string;
@@ -202,8 +204,15 @@ export function AddBusinessModal({
             <Input required value={draft.name} onChange={set("name")} autoFocus />
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Category">
-              <Input value={draft.category} onChange={set("category")} placeholder="e.g. Hair salon" />
+            <Field label="Type of business">
+              <GroupedPicker
+                value={draft.category}
+                onChange={(category) => setDraft((d) => ({ ...d, category }))}
+                groups={CATEGORY_GROUPS}
+                placeholder="Choose a type…"
+                otherPlaceholder="e.g. Tattoo artist"
+                ariaLabel="Type of business"
+              />
             </Field>
             <Field label="Contact person">
               <Input value={draft.contactName} onChange={set("contactName")} />

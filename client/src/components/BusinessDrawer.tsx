@@ -29,6 +29,8 @@ import {
   Zap,
 } from "lucide-react";
 import { api } from "../lib/api";
+import { CATEGORY_GROUPS } from "../lib/options";
+import { GroupedPicker } from "./GroupedPicker";
 import {
   AUDIT_ITEMS,
   SERVICES,
@@ -328,8 +330,17 @@ export function BusinessDrawer({
                 </span>
               </span>
             </Prop>
-            <Prop icon={<Store />} label="Category">
-              <GhostInput value={business.category} onCommit={(category) => save({ category })} />
+            <Prop icon={<Store />} label="Type">
+              <GroupedPicker
+                ghost
+                commit="blur"
+                value={business.category}
+                onChange={(category) => save({ category })}
+                groups={CATEGORY_GROUPS}
+                placeholder="Empty"
+                otherPlaceholder="Type of business"
+                ariaLabel="Type of business"
+              />
             </Prop>
             <Prop icon={<User />} label="Contact">
               <GhostInput value={business.contactName} onCommit={(contactName) => save({ contactName })} />

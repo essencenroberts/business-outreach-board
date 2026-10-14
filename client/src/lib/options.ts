@@ -1,0 +1,148 @@
+export interface OptionGroup {
+  group: string;
+  options: string[];
+}
+
+/** Business types grouped for the picker. Service providers often work from home, a suite or on the go. */
+export const CATEGORY_GROUPS: OptionGroup[] = [
+  {
+    group: "Food & drink",
+    options: [
+      "Restaurants",
+      "Food trucks",
+      "Private & personal chefs",
+      "Caterers",
+      "Bakers & home bakeries",
+      "Bakeries",
+      "Coffee shops",
+      "Juice & smoothie shops",
+      "Dessert & sweets shops",
+      "Meal prep services",
+      "Mobile bartenders",
+    ],
+  },
+  {
+    group: "Beauty",
+    options: [
+      "Hair salons",
+      "Barbershops",
+      "Loc stylists",
+      "Braiders",
+      "Wig installers",
+      "Natural hair stylists",
+      "Nail salons & nail techs",
+      "Lash techs",
+      "Brow artists",
+      "Makeup artists",
+      "Estheticians & skincare studios",
+      "Med spas",
+      "Waxing studios",
+    ],
+  },
+  {
+    group: "Wellness & fitness",
+    options: [
+      "Personal trainers & fitness coaches",
+      "Gyms & boxing gyms",
+      "Yoga & pilates studios",
+      "Dance studios",
+      "Massage therapists",
+      "Doulas & birth workers",
+      "Nutritionists & health coaches",
+    ],
+  },
+  {
+    group: "Home services",
+    options: [
+      "Contractors & remodelers",
+      "Roofers",
+      "Landscapers & lawn care",
+      "House cleaners",
+      "HVAC & plumbers",
+      "Electricians",
+      "Handymen",
+      "Movers",
+      "Pressure washing",
+    ],
+  },
+  {
+    group: "Professional & creative",
+    options: [
+      "Real estate agents",
+      "Mortgage loan officers",
+      "Insurance agents",
+      "Tax preparers & bookkeepers",
+      "Notaries & mobile notaries",
+      "Photographers",
+      "Videographers",
+      "DJs",
+      "Event planners & decorators",
+      "Event venues",
+      "Florists",
+      "Tutors",
+      "Daycares & home childcare",
+      "Pet groomers & dog walkers",
+      "Auto repair & detailing",
+      "Boutiques",
+      "Churches & nonprofits",
+    ],
+  },
+];
+/** St. Louis areas grouped for the picker. */
+export const AREA_GROUPS: OptionGroup[] = [
+  {
+    group: "Whole region",
+    options: ["Anywhere in the St. Louis metro", "Anywhere in St. Louis City", "Anywhere in St. Louis County"],
+  },
+  {
+    group: "St. Louis City",
+    options: [
+      "Downtown St. Louis",
+      "Soulard",
+      "Lafayette Square",
+      "Benton Park",
+      "Cherokee Street",
+      "Tower Grove South",
+      "The Grove",
+      "Shaw",
+      "Southampton",
+      "Bevo Mill",
+      "Dutchtown",
+      "Carondelet",
+      "The Hill",
+      "Dogtown",
+      "Central West End",
+      "Midtown",
+      "North St. Louis",
+      "The Ville",
+      "Old North",
+    ],
+  },
+  {
+    group: "St. Louis County",
+    options: [
+      "Delmar Loop / University City",
+      "Clayton",
+      "Maplewood",
+      "Richmond Heights",
+      "Brentwood",
+      "Webster Groves",
+      "Kirkwood",
+      "Affton",
+      "South County",
+      "North County (Florissant, Ferguson, Hazelwood)",
+      "Creve Coeur",
+      "Chesterfield",
+      "Ballwin / Manchester",
+      "Fenton",
+    ],
+  },
+  {
+    group: "St. Charles County",
+    options: ["St. Charles", "St. Peters", "O'Fallon, MO", "Wentzville"],
+  },
+  {
+    group: "Illinois (Metro East)",
+    options: ["East St. Louis, IL", "Belleville, IL", "Fairview Heights, IL", "O'Fallon, IL", "Edwardsville, IL"],
+  },
+];
