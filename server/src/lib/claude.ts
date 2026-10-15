@@ -232,7 +232,8 @@ const PITCH_GUIDE = `Write a short, personal cold email from a St. Louis web des
 - Open with something specific and genuine about their business (from the notes), not "I hope this finds you well".
 - Name 1 to 3 concrete gaps you actually found (e.g. no website, site not mobile friendly, no way to book online, no email list), framed as missed customers, not insults.
 - Offer one clear next step: a free 15-minute call or a quick mockup. Include the booking link if provided.
-- Sign off with the sender's details. If a detail is missing, leave it out rather than inventing it or using brackets.
+- Work the sender's offer into the body in one natural sentence.
+- Sign off with "Thanks," then on separate lines: the sender's name; the first sentence of their offer as a tagline; their business name, website, phone, email and booking link. Leave out anything missing rather than inventing it or using brackets.
 - Subject line: under 60 characters, specific to them, not salesy.`;
 
 const pitchSchema = z.object({

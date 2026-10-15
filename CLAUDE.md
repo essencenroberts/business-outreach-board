@@ -56,7 +56,18 @@ When asked to draft a pitch (the app's "Draft with Claude" button gives a reques
    - Open with something specific and genuine about their business, taken from the research.
    - Name 1–3 concrete gaps you actually found (no website, not mobile friendly, no online booking or ordering, no email list), framed as missed customers, never as insults.
    - One clear next step: a free 15-minute call (include the booking link if the profile has one) or a quick mockup.
-   - Sign with the profile details. Leave out anything that's empty; never use "[Your name]" placeholders or invent details.
+   - Work the rest of the profile's `offer` naturally into the body (one sentence on what the user does).
+   - Sign off like this, leaving out any empty line (never use "[Your name]" placeholders or invent details):
+     ```
+     Thanks,
+
+     <name>
+     <tagline: the first sentence of the profile's offer, e.g. "Building digital experiences that help brands grow">
+     <businessName>
+     <website> · <phone>
+     <email>
+     <bookingLink>
+     ```
    - Subject line under 60 characters, specific to them, not salesy.
 3. Save it with `PATCH /leads/:id` `{ "pitchSubject": "...", "pitchEmail": "..." }` (plain text with line breaks). This also logs "Drafted an email pitch" in their activity.
 4. Show the user the pitch in your reply and point out anything they should check (e.g. if the profile is empty, tell them to fill in **Settings → Your info for email pitches**).
